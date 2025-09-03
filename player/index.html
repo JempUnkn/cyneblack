@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pt-BR" prefix="og: https://ogp.me/ns#">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carregando Player...</title>
+  
+  <!-- METATAGS PADRÃO (serão substituídas dinamicamente) -->
+  <meta property="og:title" content="CYNEBLACK: Seu Portal de Filmes e Séries">
+  <meta property="og:description" content="Descubra e assista aos melhores filmes e séries aqui. Para carregar um título, use os parâmetros na URL.">
+  <meta property="og:image" content="https://i.imgur.com/8QtmGgM.png"> <!-- Imagem genérica de cinema -->
+  <meta property="og:type" content="video.movie">
+
+  <!-- Favicon -->
+  <link rel="icon" href="../assets/images/icon.png" type="image/png">
+  
+  <link rel="stylesheet" href="../styles.css"> <!-- Link para o CSS principal -->
+  <!-- Ícones do Font Awesome para um visual moderno nos botões, se necessário -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  
+  <style>
+    /* Estilos específicos para o player que podem não estar em styles.css */
+    /* Algumas regras serão sobrescritas por styles.css, outras complementares */
+
+    body {
+        background: var(--primary-bg); /* Garante o fundo do player */
+    }
+
+    .container.player-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    #server-selector {
+        margin-top: 20px;
+        margin-bottom: 25px;
+        background: var(--card-bg);
+        padding: 15px 20px;
+        border-radius: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    }
+
+    #server-selector label {
+        color: var(--text-color);
+        font-size: 1.1em;
+        font-weight: 500;
+        margin-right: 5px;
+    }
+
+    #server-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    #server-buttons .server-button {
+        background: #444; /* Cor padrão para servidores */
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    #server-buttons .server-button:hover {
+        background: #555;
+        transform: translateY(-2px);
+    }
+
+    #server-buttons .server-button.active {
+        background: var(--accent-color); /* Servidor ativo */
+        box-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
+    }
+    #server-buttons .server-button.active:hover {
+        background: var(--accent-hover);
+    }
+
+    /* Ajustes para a tela de boas-vindas */
+    #welcome-container .welcome-screen {
+        margin-top: 80px; /* Mais espaço do cabeçalho */
+    }
+
+    /* Outros ajustes de layout para o player */
+    @media (max-width: 768px) {
+        #server-selector {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        #server-buttons {
+            width: 100%;
+            justify-content: stretch;
+        }
+        #server-buttons .server-button {
+            flex: 1; /* Faz os botões ocuparem o espaço total */
+        }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>CYNE|BLACK</h1>
+  </header>
+
+  <nav>
+    <a href="../#home" class="nav-link" data-section="home-section">Home</a>
+    <a href="../#explorar" class="nav-link" data-section="explore-section">Explorar</a>
+    <a href="../#categorias" class="nav-link" data-section="categories-section">Categorias</a>
+    <a href="../#favoritos" class="nav-link" data-section="favorites-section">Favoritos</a>
+  </nav>
+
+  <div class="container player-container" id="player-container" style="display: none;">
+    <div id="banner">
+      <img id="poster" src="" alt="Poster">
+      <div id="info">
+        <h1 id="title"></h1>
+        <span id="year-runtime"></span>
+        <p id="details"></p>
+        <p id="meta"></p>
+        <div id="episode-selector">
+          <label for="season">Temporada:</label>
+          <select id="season"></select>
+          <label for="episode">Episódio:</label>
+          <select id="episode"></select>
+          <button onclick="loadSelectedEpisode()">
+            <i class="fas fa-play"></i> Assistir Episódio
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="server-selector">
+      <label>Escolha o servidor:</label>
+      <div id="server-buttons">
+        <button class="server-button active" data-server="vidsrc">VidSRC</button>
+        <button class="server-button" data-server="warezcdn">WarezCdn</button>
+      </div>
+    </div>
+    
+    <iframe id="player" allowfullscreen style="width:100%; height:80vh;"></iframe>
+
+  </div>
+
+  <div id="welcome-container">
+    <!-- Conteúdo da página inicial criativa será injetado aqui -->
+  </div>
+
+
+  <script>
+    const API_KEY = '8fa8be48';
+    const BASE_URL = 'https://www.omdbapi.com/';
+    const TMDB_API_KEY = 'a0e715211fab6edda0bd3c35858a070c';
+    const TMDB_BASE = 'https://api.themoviedb.org/3';
+
+    // Função para atualizar as metatags e o título da página
+    function updateMetaTags(data) {
+        const title = `Assistir: ${data.Title} (${data.Year}) - CYNEBLACK`;
+        const description = data.Plot || 'Sem descrição disponível.';
+
+        document.title = title;
+
+        const setMeta = (property, content) => {
+            let element = document.querySelector(`meta[property='${property}']`);
+            if (!element) {
+                element = document.createElement('meta');
+                element.setAttribute('property', property);
+                document.head.appendChild(element);
+            }
+            element.setAttribute('content', content);
+        };
+
+        setMeta('og:title', title);
+        setMeta('og:description', description);
+        setMeta('og:image', data.Poster);
+        setMeta('og:url', window.location.href);
+        setMeta('og:type', data.Type === 'series' ? 'video.tv_show' : 'video.movie');
+    }
+
+    function getQueryParams() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        tmdbID: params.get('tmdb_id'),
+        type: params.get('type') || 'movie', // 'movie' ou 'tv'
+        title: params.get('title') // Mantém o título para referência, mas o IMDb ID é o principal
+      };
+    }
+
+    async function fetchImdbID(tmdbID, type) {
+      if (!tmdbID) return null; // Retorna nulo se tmdbID não for fornecido
+
+      let url = '';
+      if (type === 'movie') {
+        url = `${TMDB_BASE}/movie/${tmdbID}?api_key=${TMDB_API_KEY}&language=pt-BR`;
+      } else if (type === 'tv') {
+        url = `${TMDB_BASE}/tv/${tmdbID}/external_ids?api_key=${TMDB_API_KEY}`;
+      }
+      
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) {
+            console.error(`Erro ao buscar TMDB ID: ${resp.status} ${resp.statusText}`);
+            return null;
+        }
+        const data = await resp.json();
+        // Para filmes, o imdb_id vem diretamente. Para TV, vem em external_ids
+        return data.imdb_id;
+      } catch (error) {
+        console.error("Erro na requisição TMDB:", error);
+        return null;
+      }
+    }
+    
+    function getLanguageCode() {
+        // Retorna 'pt' ou 'en' para compatibilidade com vidsrc
+        const lang = (navigator.language || navigator.userLanguage).slice(0, 2);
+        return ['pt', 'en'].includes(lang) ? lang : 'en';
+    }
+
+    async function fetchMovieData(imdbID) {
+      if (!imdbID) return null;
+      try {
+        const response = await fetch(`${BASE_URL}?apikey=${API_KEY}&i=${imdbID}&plot=full`);
+        if (!response.ok) {
+            console.error(`Erro ao buscar dados OMDb: ${response.status} ${response.statusText}`);
+            return null;
+        }
+        return await response.json();
+      } catch (error) {
+        console.error("Erro na requisição OMDb:", error);
+        return null;
+      }
+    }
+
+    function populateEpisodeSelectors(totalSeasons) {
+        const seasonSelect = document.getElementById('season');
+        seasonSelect.innerHTML = '';
+        for (let i = 1; i <= totalSeasons; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = `Temporada ${i}`;
+            seasonSelect.appendChild(opt);
+        }
+        seasonSelect.onchange = () => updateEpisodes(seasonSelect.value);
+        updateEpisodes(1); // Carrega episódios da primeira temporada por padrão
+    }
+
+    async function updateEpisodes(seasonNum) {
+        const { tmdbID, type } = getQueryParams();
+        const imdbID = await fetchImdbID(tmdbID, type); // Garante que o imdbID está disponível
+        
+        const episodeSelect = document.getElementById('episode');
+        episodeSelect.innerHTML = '<option>Carregando episódios...</option>';
+
+        try {
+            const response = await fetch(`${BASE_URL}?apikey=${API_KEY}&i=${imdbID}&Season=${seasonNum}`);
+            const seasonData = await response.json();
+            
+            episodeSelect.innerHTML = ''; 
+
+            if (seasonData.Episodes && seasonData.Episodes.length > 0) {
+                 seasonData.Episodes.forEach((ep) => {
+                    const opt = document.createElement('option');
+                    opt.value = ep.Episode;
+                    opt.textContent = `Ep. ${ep.Episode} - ${ep.Title}`;
+                    episodeSelect.appendChild(opt);
+                });
+            } else {
+                // Fallback: Adiciona 24 episódios genéricos se a API não retornar
+                for (let i = 1; i <= 24; i++) {
+                     const opt = document.createElement('option');
+                     opt.value = i;
+                     opt.textContent = `Episódio ${i}`;
+                     episodeSelect.appendChild(opt);
+                 }
+            }
+            // Seleciona o primeiro episódio após carregar
+            if (episodeSelect.options.length > 0) {
+                episodeSelect.value = episodeSelect.options[0].value;
+            }
+            updatePlayerSource(); // Atualiza o player com o novo episódio/temporada
+        } catch (e) {
+            console.error("Falha ao buscar episódios:", e);
+            episodeSelect.innerHTML = '<option>Erro ao carregar</option>';
+        }
+    }
+
+
+
+    // Funções de carregamento do player e seleção de servidor
+    let currentServer = 'vidsrc'; // Servidor padrão
+
+    async function updatePlayerSource() {
+      const { tmdbID, type } = getQueryParams();
+      const imdbID = await fetchImdbID(tmdbID, type);
+
+      if (!imdbID) {
+        document.getElementById('player').src = '';
+        console.error("IMDb ID não disponível para carregar o player.");
+        return;
+      }
+
+      const season = document.getElementById('season')?.value || 1;
+      const episode = document.getElementById('episode')?.value || 1;
+      const langCode = getLanguageCode();
+
+      let src = '';
+
+      switch(currentServer) {
+        case 'vidsrc':
+          src = type === 'tv'
+            ? `https://vidsrc.xyz/embed/tv?imdb=${imdbID}&season=${season}&episode=${episode}&ds_lang=${getLanguageCode()}`
+            : `https://vidsrc.xyz/embed/movie/${imdbID}/?ds_lang=${getLanguageCode()}`;
+          break;
+
+        case 'warezcdn':
+          if(type === 'tv') {
+            src = `https://embed.warezcdn.com/serie/${imdbID}/${season}/${episode}`;
+          } else {
+            src = `https://embed.warezcdn.com/filme/${imdbID}`;
+          }
+          break;
+        // Adicionar outros servidores aqui conforme necessário
+      }
+
+      document.getElementById('player').src = src;
+    }
+
+    // Gerencia a seleção de botões de servidor
+    document.getElementById('server-buttons').addEventListener('click', (event) => {
+        if (event.target.classList.contains('server-button')) {
+            // Remove 'active' de todos os botões
+            document.querySelectorAll('.server-button').forEach(btn => btn.classList.remove('active'));
+            // Adiciona 'active' ao botão clicado
+            event.target.classList.add('active');
+            currentServer = event.target.dataset.server;
+            updatePlayerSource(); // Atualiza o player com o novo servidor
+        }
+    });
+
+    // Função para a página inicial criativa
+    function showWelcomeScreen() {
+      document.getElementById('player-container').style.display = 'none';
+      const welcomeContainer = document.getElementById('welcome-container');
+      
+      const title = "CYNEBLACK: Seu Portal de Filmes e Séries";
+      document.title = title;
+      
+      welcomeContainer.innerHTML = `
+        <div class="welcome-screen">
+          <img src="https://i.imgur.com/8QtmGgM.png" alt="CYNEBLACK" style="max-width: 200px; border-radius: 50%;">
+          <h1>Bem-vindo ao CYNEBLACK!</h1>
+          <p>Este é um player de vídeo dinâmico. Para assistir a algo, você precisa fornecer o ID do TMDb e o tipo (filme ou série) na URL.</p>
+          <p>Por exemplo, para assistir Mr. Robot, use a seguinte URL:</p>
+          <p><code>?tmdb_id=62560&type=tv</code></p>
+          <p>Você pode encontrar o ID do TMDb para seu filme ou série favorita em sites como o <a href="https://www.themoviedb.org/" target="_blank" style="color: #61dafb;">The Movie Database (TMDb)</a>.</p>
+        </div>
+      `;
+    }
+
+    async function initializePage() {
+      const { tmdbID, type } = getQueryParams();
+
+      if (!tmdbID) {
+        showWelcomeScreen();
+        return;
+      }
+
+      const imdbID = await fetchImdbID(tmdbID, type);
+
+      if (!imdbID) {
+        document.body.innerHTML = `<div class="message error"><h2>Erro: Não foi possível carregar os detalhes. TMDb ID '${tmdbID}' ou tipo '${type}' inválido.</h2></div>`;
+        return;
+      }
+
+      document.getElementById('welcome-container').style.display = 'none';
+      document.getElementById('player-container').style.display = 'block';
+
+      const data = await fetchMovieData(imdbID);
+
+      if (!data || data.Response === 'False') {
+        document.body.innerHTML = `<div class="message error"><h2>Erro: Não foi possível encontrar informações para o título (IMDb ID: ${imdbID}).</h2></div>`;
+        return;
+      }
+
+      updateMetaTags(data);
+
+      document.getElementById('title').innerText = data.Title;
+      document.getElementById('year-runtime').innerText = `${data.Year} | ${data.Runtime || 'N/A'}`;
+      document.getElementById('details').innerText = data.Plot;
+      document.getElementById('meta').innerHTML = `<strong>Gênero:</strong> ${data.Genre} | <strong>IMDb:</strong> ${data.imdbRating} | <strong>Diretor:</strong> ${data.Director}`;
+      document.getElementById('poster').src = data.Poster !== 'N/A' ? data.Poster : 'https://via.placeholder.com/300x450?text=Poster+N%C3%A3o+Dispon%C3%ADvel';
+      document.getElementById('poster').alt = `Poster de ${data.Title}`;
+
+      if (type === 'tv') {
+        document.getElementById('episode-selector').style.display = 'flex'; // Use flex para o layout interno
+        const totalSeasons = parseInt(data.totalSeasons, 10) || 1;
+        populateEpisodeSelectors(totalSeasons);
+        // O player será atualizado pela função updateEpisodes ou updatePlayerSource
+      } else {
+        document.getElementById('episode-selector').style.display = 'none';
+        updatePlayerSource(); // Carrega o filme diretamente
+      }
+    }
+
+    // Garante que o player seja inicializado ou a tela de boas-vindas apareça
+    document.addEventListener('DOMContentLoaded', initializePage);
+    
+    // Adicionar listeners para os seletores de temporada e episódio para atualizar o player
+    document.getElementById('season').addEventListener('change', () => updateEpisodes(document.getElementById('season').value));
+    document.getElementById('episode').addEventListener('change', updatePlayerSource);
+
+  </script>
+</body>
+</html>

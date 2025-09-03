@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CYNEBLACK: Seu Portal de Filmes e Séries</title>
+  
+  <!-- SEO básico -->
+  <meta name="description" content="Assista filmes e séries online no Cineblack. Explore lançamentos, séries populares e adicione aos favoritos.">
+  <meta name="keywords" content="filmes, séries, assistir online, Cineblack, lançamentos, favoritos">
+  <meta name="author" content="CYNEBLACK">
+
+  <!-- Favicon -->
+  <link rel="icon" href="assets/images/icon.png" type="image/png">
+
+  <!-- Fontes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- CSS principal -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- Font Awesome para ícones -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/kTcO2+6o3dTg1X0Qb4l3bfKJ9FZl4P59fYzzZ+Xh/2yZ+0JbB+fZ9L+7knhG/52H+6AksflrX8VA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+  <header>
+    <h1>CYNE|BLACK</h1>
+  </header>
+
+  <nav>
+    <a href="#home" class="nav-link active" data-section="home-section">Home</a>
+    <a href="#explorar" class="nav-link" data-section="explore-section">Explorar</a>
+    <a href="#categorias" class="nav-link" data-section="categories-section">Categorias</a>
+    <a href="#favoritos" class="nav-link" data-section="favorites-section">Favoritos</a>
+  </nav>
+
+  <main>
+    <input type="text" id="search-bar" placeholder="Busque filmes ou séries..." autocomplete="off" />
+    <ul id="suggestions" class="suggestions"></ul> <!-- Adicionado classe para JS controlar visibilidade -->
+  </main>
+
+  <!-- SEÇÕES DE CONTEÚDO -->
+
+  <!-- Seção Home -->
+  <section id="home-section" class="content-section active">
+    <h2>Filmes Recentes</h2>
+    <div id="recent-movies-grid" class="movie-grid">
+      <!-- Filmes recentes serão inseridos aqui -->
+    </div>
+
+    <h2>Séries Populares</h2>
+    <div id="popular-series-grid" class="movie-grid">
+      <!-- Séries populares serão inseridas aqui -->
+    </div>
+
+    <h2>Mais Vistos</h2>
+    <div id="top-rated-movies-grid" class="movie-grid">
+      <!-- Filmes mais vistos serão inseridos aqui -->
+    </div>
+  </section>
+
+  <!-- Seção Explorar -->
+  <section id="explore-section" class="content-section">
+    <h2>Explore Títulos</h2>
+    <div id="explore-grid" class="movie-grid">
+      <!-- Filmes e séries em destaque para explorar -->
+    </div>
+    <div class="message" id="explore-loading" style="display: none;">Carregando mais títulos...</div>
+  </section>
+
+  <!-- Seção Categorias -->
+  <section id="categories-section" class="content-section">
+    <h2>Navegar por Gênero</h2>
+    <div id="genres-list">
+      <!-- Lista de gêneros dinâmicos será inserida aqui -->
+    </div>
+
+    <h2 id="category-title" style="display: none;"></h2>
+    <div id="category-movies-grid" class="movie-grid">
+      <!-- Filmes da categoria selecionada serão inseridos aqui -->
+    </div>
+    <div class="message" id="category-loading" style="display: none;">Carregando filmes da categoria...</div>
+  </section>
+
+  <!-- Seção Favoritos -->
+  <section id="favorites-section" class="content-section">
+    <h2>Meus Favoritos</h2>
+    <div id="favorites-grid" class="movie-grid">
+      <!-- Filmes/séries favoritos serão inseridos aqui -->
+    </div>
+    <div class="message" id="no-favorites-message">Você ainda não adicionou nenhum favorito.</div>
+  </section>
+
+  <!-- Hub de resultados da busca (será ativado após uma busca de ENTER) -->
+  <section id="search-results-section" class="content-section">
+    <h2 id="search-results-title">Resultados da Busca para ""</h2>
+    <div id="search-results-grid" class="movie-grid">
+      <!-- Resultados da busca completa serão inseridos aqui -->
+    </div>
+    <div class="message" id="search-loading" style="display: none;">Carregando resultados...</div>
+    <div class="message error" id="search-error" style="display: none;">Nenhum resultado encontrado para sua busca.</div>
+  </section>
+
+
+  <script src="script.js"></script>
+</body>
+</html>
