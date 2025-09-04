@@ -364,14 +364,46 @@
       document.title = title;
       
       welcomeContainer.innerHTML = `
-        <div class="welcome-screen">
-          <img src="https://i.imgur.com/8QtmGgM.png" alt="CYNEBLACK" style="max-width: 200px; border-radius: 50%;">
-          <h1>Bem-vindo ao CYNEBLACK!</h1>
-          <p>Este é um player de vídeo dinâmico. Para assistir a algo, você precisa fornecer o ID do TMDb e o tipo (filme ou série) na URL.</p>
-          <p>Por exemplo, para assistir Mr. Robot, use a seguinte URL:</p>
-          <p><code>?tmdb_id=62560&type=tv</code></p>
-          <p>Você pode encontrar o ID do TMDb para seu filme ou série favorita em sites como o <a href="https://www.themoviedb.org/" target="_blank" style="color: #61dafb;">The Movie Database (TMDb)</a>.</p>
-        </div>
+        <div class="welcome-screen" style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
+          color: #ffffff;
+          padding: 35px 25px;
+          border-radius: 15px;
+          box-shadow: 0 5px 35px rgba(229, 9, 20, 0.5), 0 0 20px rgba(0,0,0,0.3);
+          max-width: 600px;
+          margin: 55px auto;
+          font-family: 'Arial', sans-serif;
+          animation: fadeIn 1s ease forwards;
+      ">
+          <img src="../assets/images/icon.png" alt="CYNEBLACK" style="
+              max-width: 180px; 
+              border-radius: 50%; 
+              box-shadow: 0 0 20px rgba(229, 9, 20, 0.6);
+              margin-bottom: 25px;
+              border: 3px solid rgba(229,9,20,0.5);
+          ">
+          <h1 style="
+              font-size: 1.6em; 
+              margin-bottom: 15px; 
+              text-shadow: 0 2px 5px rgba(229,9,20,0.7);
+          ">Bem-vindo ao CYNEBLACK!</h1>
+          <p style="margin-bottom: 10px; line-height: 1.5; font-size: 0.9em;">Este é um player de vídeo dinâmico. Para assistir a algo, forneça o ID do TMDb e o tipo (filme ou série) na URL.</p>
+          <p style="margin-bottom: 10px; font-size: 0.7em;">Por exemplo, para assistir <strong>Mr. Robot</strong>, use:</p>
+          <p style="background: rgba(0,0,0,0.3); padding: 6px 9px; border-radius: 4px; display: inline-block; margin-bottom: 12px; font-size: 1em;"><code>?tmdb_id=62560&type=tv</code></p>
+          <p style="line-height: 1.5; font-size: 0.7em;">Você pode encontrar o ID do TMDb para seu filme ou série favorita em sites como o <a href="https://www.themoviedb.org/" target="_blank" style="color: #61dafb; text-decoration: underline;">The Movie Database (TMDb)</a>.</p>
+      </div>
+
+      <style>
+      @keyframes fadeIn {
+          0% { opacity: 0; transform: translateY(20px); }
+          100% { opacity: 1; transform: translateY(0); }
+      }
+      </style>
       `;
     }
 
