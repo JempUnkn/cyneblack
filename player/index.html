@@ -129,9 +129,9 @@
           <select id="season"></select>
           <label for="episode">Episódio:</label>
           <select id="episode"></select>
-          <button onclick="loadSelectedEpisode()">
+          <!--<button onclick="loadSelectedEpisode()">
             <i class="fas fa-play"></i> Assistir Episódio
-          </button>
+          </button>-->
         </div>
       </div>
     </div>
@@ -333,16 +333,27 @@
     }
 
     // Gerencia a seleção de botões de servidor
+    const episodeSelector = document.getElementById('episode-selector');
     document.getElementById('server-buttons').addEventListener('click', (event) => {
         if (event.target.classList.contains('server-button')) {
             // Remove 'active' de todos os botões
             document.querySelectorAll('.server-button').forEach(btn => btn.classList.remove('active'));
+
             // Adiciona 'active' ao botão clicado
             event.target.classList.add('active');
             currentServer = event.target.dataset.server;
-            updatePlayerSource(); // Atualiza o player com o novo servidor
+
+            if (currentServer === 'warezcdn') {
+                episodeSelector.style.display = 'none';
+                // episodeSelector.remove();
+            } else {
+                episodeSelector.style.display = 'block';
+            }
+            
+            updatePlayerSource();
         }
     });
+
 
     // Função para a página inicial criativa
     function showWelcomeScreen() {

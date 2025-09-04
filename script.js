@@ -130,7 +130,10 @@ navLinks.forEach(link => {
         if (targetSectionId === 'home-section') loadHomeContent();
         if (targetSectionId === 'explore-section') loadExploreContent(true);
         if (targetSectionId === 'categories-section') loadGenres();
-        if (targetSectionId === 'favorites-section') displayFavorites();
+        if (targetSectionId === 'favorites-section') {
+            activateSection('favorites-section');
+            displayFavorites();
+        }
     });
 });
 
@@ -514,6 +517,52 @@ function displayMovies(movies, gridElement, mediaType = 'movie', clearBefore = t
 
 // --- FUNÇÕES DE FAVORITOS (LOCALSTORAGE) ---
 
+  //notificação
+function showFavoritePopup(message) {
+    const popup = document.createElement('div');
+    popup.textContent = message;
+
+    // Estilo do popup
+    Object.assign(popup.style, {
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        maxWidth: '300px',
+        padding: '15px 25px',
+        background: 'linear-gradient(135deg, rgba(0,0,0,0.9), rgba(30,30,30,0.8))',
+        color: '#fff',
+        border: '2px solid rgba(229, 9, 20, 0.5)',
+        boxShadow: '0 4px 20px rgba(229, 9, 20, 0.6), 0 8px 30px rgba(0,0,0,0.4)',
+        backdropFilter: 'blur(5px)',
+        borderRadius: '12px',
+        zIndex: 9999,
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '10px',
+        fontWeight: '450',
+        textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+        opacity: 0,
+        transform: 'translateX(120px) rotateZ(2deg)',
+        transition: 'opacity 0.4s ease, transform 0.4s ease',
+        cursor: 'default',
+    });
+
+
+    document.body.appendChild(popup);
+
+    // Entrada
+    requestAnimationFrame(() => {
+        popup.style.opacity = 1;
+        popup.style.transform = 'translateX(0) rotateZ(0deg)';
+    });
+
+    // Saída
+    setTimeout(() => {
+        popup.style.opacity = 0;
+        popup.style.transform = 'translateX(120px) rotateZ(2deg)';
+        setTimeout(() => popup.remove(), 400); // remove do DOM
+    }, 2500); // duração do popup visível
+}
+
 const FAVORITES_KEY = 'cineblack_favorites';
 
 function getFavorites() {
@@ -544,17 +593,15 @@ function toggleFavorite(itemData, buttonElement) {
     const isCurrentlyFavorite = isFavorite(itemData.id);
 
     if (isCurrentlyFavorite) {
-        // Remover dos favoritos
         favorites = favorites.filter(item => item.id !== String(itemData.id));
         buttonElement.classList.remove('active');
-        buttonElement.querySelector('i').classList.replace('fas', 'far'); // Ícone vazio
-        alert(`${itemData.title} removido dos favoritos!`);
+        buttonElement.querySelector('i').classList.replace('fas', 'far');
+        showFavoritePopup(`${itemData.title} removido dos favoritos!`);
     } else {
-        // Adicionar aos favoritos
-        favorites.push({ ...itemData, id: String(itemData.id) }); // Garante que o ID é string
+        favorites.push({ ...itemData, id: String(itemData.id) });
         buttonElement.classList.add('active');
-        buttonElement.querySelector('i').classList.replace('far', 'fas'); // Ícone preenchido
-        alert(`${itemData.title} adicionado aos favoritos!`);
+        buttonElement.querySelector('i').classList.replace('far', 'fas');
+        showFavoritePopup(`${itemData.title} adicionado aos favoritos!`);
     }
     saveFavorites(favorites);
     // Atualiza a exibição de favoritos se estiver na seção
@@ -569,7 +616,25 @@ function displayFavorites() {
 
     if (favorites.length > 0) {
         hideMessage(noFavoritesMessage);
-        displayMovies(favorites, favoritesGrid, 'mixed', true); // mixed type for favorites
+        favorites.forEach(item => {
+            const movieCard = document.createElement('div');
+            movieCard.className = 'movie-card';
+            movieCard.innerHTML = `
+                <img src="${getPosterUrl(item.poster)}" alt="${item.title}">
+                <h3>${item.title}</h3>
+                <p>${formatMediaType(item.type)} (${item.year})</p>
+                <div class="actions">
+                    <button class="watch-button" data-tmdb-id="${item.id}" data-type="${item.type}" data-title="${item.title}">
+                        <i class="fas fa-play"></i> Assistir
+                    </button>
+                    <button class="favorite-button active" data-tmdb-id="${item.id}" data-type="${item.type}" data-title="${item.title}" data-poster="${item.poster}" data-year="${item.year}">
+                        <i class="fas fa-heart"></i> Favoritar
+                    </button>
+                </div>
+            `;
+            favoritesGrid.appendChild(movieCard);
+        });
+
     } else {
         showMessage(noFavoritesMessage, 'Você ainda não adicionou nenhum favorito.');
     }
@@ -591,6 +656,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Carrega os favoritos para que os botões já venham marcados
     displayFavorites();
+});
+
+// --- Delegação de evento para funcionar em todos os cards, inclusive favoritos ---
+document.addEventListener('click', (event) => {
+    if (event.target.closest('.favorite-button')) {
+        const button = event.target.closest('.favorite-button');
+        const itemData = {
+            id: button.dataset.tmdbId,
+            title: button.dataset.title,
+            type: button.dataset.type,
+            poster: button.dataset.poster,
+            year: button.dataset.year
+        };
+        toggleFavorite(itemData, button);
+    }
 });
 
 // Aprimoramento: Suporte para scroll infinito em seções
